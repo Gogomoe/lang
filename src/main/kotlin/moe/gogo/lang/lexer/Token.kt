@@ -3,7 +3,7 @@ package moe.gogo.lang.lexer
 import java.lang.UnsupportedOperationException
 
 
-sealed class Token(val lineNumber: Int, val id: String) {
+sealed class Token(val lineNumber: Int, val name: String) {
 
     open val intValue: Int
         get() = throw UnsupportedOperationException("不支持转换为数字")

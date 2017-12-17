@@ -33,11 +33,11 @@ class LexerTest : StringSpec() {
             lexer.read().text shouldBe "10"
             lexer.read().text shouldBe "b"
             lexer.read().text shouldBe "="
-            lexer.read().id shouldBe "("
-            lexer.read().id shouldBe "id"
-            lexer.read().id shouldBe "+"
-            lexer.read().id shouldBe "number"
-            lexer.read().id shouldBe ")"
+            lexer.read().name shouldBe "("
+            lexer.read().name shouldBe "name"
+            lexer.read().name shouldBe "+"
+            lexer.read().name shouldBe "number"
+            lexer.read().name shouldBe ")"
         }
     }
 
