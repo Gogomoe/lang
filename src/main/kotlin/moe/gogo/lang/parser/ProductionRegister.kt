@@ -14,6 +14,11 @@ class ProductionRegister {
      */
     fun register(string: String) {
         val arr = splitProductionString(string)
+        if (arr.size == 1) {
+            val non = getOrCreateNonTerminal(arr[0])
+            productions.add(Production(non, emptyList()))
+            return
+        }
         if (arr.size < 3 || arr[1] != "->" || !isNonTerminalName(arr[0])) {
             throw ParseException("语法 $string 错误")
         }

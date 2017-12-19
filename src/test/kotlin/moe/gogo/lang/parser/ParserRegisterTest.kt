@@ -4,6 +4,7 @@ import io.kotlintest.specs.StringSpec
 import moe.gogo.lang.ast.ASTLeaf
 import moe.gogo.lang.ast.ASTList
 import moe.gogo.lang.ast.ASTree
+import moe.gogo.lang.ast.BinaryExpr
 import moe.gogo.lang.ast.NumberLiteral
 import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.lexer.buildLexicon
@@ -35,15 +36,4 @@ private fun buildProductions(): ProductionRegister {
     register.register("OpFactor -> + Factor OpFactor")
     register.register("OpFactor -> ε")
     return register
-}
-
-class BinaryExpr(list: List<ASTree>) : ASTList(list) {
-
-    private val left = list[0]
-    private val right = list[2]
-
-    private val operator = (list[1] as ASTLeaf).token.text
-
-    override fun toString(): String = "<$left $operator $right>"
-
 }
