@@ -1,9 +1,6 @@
 package moe.gogo.lang.parser
 
 import io.kotlintest.specs.StringSpec
-import moe.gogo.lang.ast.ASTLeaf
-import moe.gogo.lang.ast.ASTList
-import moe.gogo.lang.ast.ASTree
 import moe.gogo.lang.ast.BinaryExpr
 import moe.gogo.lang.ast.NumberLiteral
 import moe.gogo.lang.lexer.Lexer

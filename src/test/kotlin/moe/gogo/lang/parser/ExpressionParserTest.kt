@@ -1,6 +1,9 @@
 package moe.gogo.lang.parser
 
 import io.kotlintest.specs.StringSpec
+import moe.gogo.lang.ast.ASTList
+import moe.gogo.lang.ast.ASTree
+import moe.gogo.lang.ast.Identifier
 import moe.gogo.lang.ast.NumberLiteral
 import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.lexer.buildLexicon
@@ -15,7 +18,40 @@ class ExpressionParserTest : StringSpec() {
             val lexer = Lexer("5 + 8 * 2".reader(), buildLexicon())
             println(parser.parse(lexer))
         }
+        "complex expression"{
+            val productions = ProductionRegister()
+            productions.register("Exp")
+            productions.register("Factor -> number")
+            productions.register("Factor -> id")
+            productions.register("Factor -> If")
+            productions.register("If -> if ( Exp ) Exp else Exp")
+
+            val register = ParserRegister(productions)
+            val expr = ExpressionParser(register, productions)
+            expr.defineOperator(">" ,1,LEFT)
+            expr.defineOperator("+", 2, LEFT)
+            expr.defineOperator("*", 3, LEFT)
+
+            register.defineType("number", NumberLiteral::class)
+            register.defineType("id", Identifier::class)
+            register.defineType("If", IfExpr::class)
+            register.register("Exp", expr)
+
+            val parser = register.findParser("Exp")!!
+            val lexer = Lexer("5 + if (a > 5) 10 else b + 5".reader(), buildLexicon())
+            println(parser.parse(lexer))
+        }
     }
+
+}
+
+class IfExpr(list: List<ASTree>) : ASTList(list) {
+
+    val condition = list[2]
+    val success = list[4]
+    val fail = list[6]
+
+    override fun toString(): String = "<if $condition \n $success \n $fail>"
 
 }
 

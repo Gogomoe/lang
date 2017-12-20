@@ -1,7 +1,9 @@
 package moe.gogo.lang.parser
 
 /**
- * 非终止符必须已大写字母开始，终止符不能以大写字母开始
+ * 注册产生式的类。
+ *
+ * 通过[register]方法可以注册LL文法
  */
 class ProductionRegister {
 
@@ -10,7 +12,17 @@ class ProductionRegister {
     private val terminalSymbols = mutableMapOf<String, Symbol>()
 
     /**
-     * 注册产生式
+     * 注册展开式
+     *
+     * 这几行都是合法的范例
+     * ```
+     * Expr -> Factor + Factor
+     * Factor -> number
+     * Factor -> - number
+     * ```
+     * 非终止符必须已大写字母开始，终止符不能以大写字母开始。每两个符号之间至少有一个空格。
+     *
+     * 若使用[ExpressionParser]之类的对应的Parser，也需要添加一条空语法 ` Expr ` 以便生成对应的非终止符
      */
     fun register(string: String) {
         val arr = splitProductionString(string)

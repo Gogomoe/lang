@@ -8,6 +8,28 @@ import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.lexer.Token
 import kotlin.reflect.KClass
 
+/**
+ * 本类是Parser解析的核心类
+ *
+ * 使用 Parser 前，需先在[ProductionRegister]按照 LL 文法注册相应的展开式。
+ * 本类通过注册的展开式生成对应的[Parser表][ParserTable]。
+ * 本类默认的Parser可以通过 Parser表 找到对应的解析方式。
+ *
+ * 然而这种方法存在两个问题。
+ *
+ * 一是某些语法对应相应的 ASTree，比如 If 语句有对应的 ASTree，
+ * 这时应通过[defineType]方法来定义非终止符对应生成的 ASTree 类型。
+ *
+ * 二是解析表达式时为了考虑优先级，LL文法会显得很复杂。
+ * 这时采取了另一种解析表达式的方法，[ExpressionParser]类可以定义二元运算符的优先级并解析表达式。
+ *
+ * 因此，本类提供了[register]方法注册某一自定义的Parser。
+ *
+ * 具体使用可以参考测试用例 ExpressionParserTest 类。
+ *
+ * @see ProductionRegister
+ * @see ExpressionParser
+ **/
 class ParserRegister(private val productions: ProductionRegister) {
 
     private val table = productions.make()
@@ -25,7 +47,9 @@ class ParserRegister(private val productions: ProductionRegister) {
     }
 
     /**
-     * 注册某个符号的Parser
+     * 注册某个非终止符对应的Parser
+     * @param name 非终止符的name
+     * @param parser 对应的parser
      */
     fun register(name: String, parser: Parser) {
         val symbol = productions.getSymbol(name) ?:
@@ -35,6 +59,8 @@ class ParserRegister(private val productions: ProductionRegister) {
 
     /**
      * 定义某个非终止符对应的树
+     * @param name 非终止符的name
+     * @param treeType 对应生成的ASTree的类型
      */
     fun defineType(name: String, treeType: KClass<out ASTree>) {
         val symbol = productions.getSymbol(name) ?:
@@ -43,7 +69,13 @@ class ParserRegister(private val productions: ProductionRegister) {
     }
 
     /**
-     * 获取非终止符对应的产生式
+     * 获取非终止符对应的产生式。
+     *
+     * 需要注意的是，如果存在多个Parser，只会返回第一个。
+     * 因此不能保证返回的 Parser 能正确解析。
+     * 可以通过只设置一种产生式来避免这个问题。
+     *
+     * @param name 非终止符的name
      */
     fun findParser(name: String): Parser? {
         val symbol = productions.getSymbol(name)!!
@@ -97,7 +129,8 @@ class ParserRegister(private val productions: ProductionRegister) {
     private fun getSymbol(token: Token): Symbol? = when {
         token.isNumber -> findType(NumberLiteral::class)
         token.isString -> findType(StringLiteral::class)
-        token.isIdentifier -> productions.getSymbol(token.name)
+        // 没有找到对应符号时作为 id 解析
+        token.isIdentifier -> productions.getSymbol(token.name) ?: productions.getSymbol("id")
         token == Token.EOF -> Symbol.END
         else -> throw ParseException("token 类型不匹配 $token")
     }
@@ -132,8 +165,8 @@ class ParserRegister(private val productions: ProductionRegister) {
             if (lexer.peek() == Token.EOF && production.nonTerminal.follow.contains(Symbol.END)) {
                 return
             }
-            if(lexer.peek() == Token.EOF){
-                throw ParseException("未正确结束 ",lexer.peek())
+            if (lexer.peek() == Token.EOF) {
+                throw ParseException("未正确结束 ", lexer.peek())
             }
             /**
              * 解析子树

@@ -11,6 +11,15 @@ import moe.gogo.lang.parser.ExpressionParser.Association.RIGHT
 
 internal data class Precedence(val value: Int, val association: Association)
 
+/**
+ * 采用 算符优先分析法 的易于解析表达式的Parser。
+ *
+ * 可以通过 [defineOperator] 定义二元运算符，并设定它的优先级、左结合或右结合。
+ *
+ * 构造时需要指定 Factor 的 name，并在语法中包含 Factor 对应的解析式
+ *
+ * @see ParserRegister
+ */
 class ExpressionParser(private val register: ParserRegister,
                        private val productions: ProductionRegister,
                        private val factorName: String = "Factor") : Parser() {
@@ -28,6 +37,12 @@ class ExpressionParser(private val register: ParserRegister,
         LEFT, RIGHT
     }
 
+    /**
+     * 定义一个二元运算符
+     * @param name 二元运算符的符号，即对应Token的name
+     * @param precedence 优先级，数字越大优先级越高
+     * @param association 结合方式，左结合或右结合
+     */
     fun defineOperator(name: String, precedence: Int, association: Association) {
         operators[name] = Precedence(precedence, association)
     }
