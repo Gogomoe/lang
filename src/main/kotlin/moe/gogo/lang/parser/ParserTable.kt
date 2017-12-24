@@ -32,13 +32,13 @@ class ParserTable internal constructor(private val productions: Set<Production>)
 
         nonTerminals.forEach {
             output(it.name)
-            output(it.first)
+            output(it.first,50)
             println()
         }
         println()
         nonTerminals.forEach {
             output(it.name)
-            output(it.first)
+            output(it.follow,50)
             println()
         }
 
@@ -149,14 +149,14 @@ class ParserTable internal constructor(private val productions: Set<Production>)
                     // 是表达式最后一个字符
                     if (i == symbols.size - 1) {
                         current.addFollow(nonTerminal.follow)
-                        break
+                        continue
                     }
 
                     // 下个是终止符
                     val next = symbols[i + 1]
                     if (next.isTerminal() && next != Symbol.EMPTY) {
                         current.addFollow(next)
-                        break
+                        continue
                     }
 
                     // 下个是非终止符

@@ -15,7 +15,7 @@ internal sealed class Symbol(val name: String) {
         override fun toString(): String = "$"
     }
 
-    object EMPTY : Symbol("EMPTY") {
+    object EMPTY : Symbol("ε") {
         override fun toString(): String = "ε"
     }
 

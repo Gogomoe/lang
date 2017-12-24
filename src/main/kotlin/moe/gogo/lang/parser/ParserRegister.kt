@@ -39,6 +39,7 @@ class ParserRegister(private val productions: ProductionRegister) {
     private val defaults = mutableMapOf<Production, Parser>()
 
     private val terminalParser = TerminalParser()
+    private val emptyParser = EmptyParser()
 
     init {
         productions.productions.forEach {
@@ -107,10 +108,10 @@ class ParserRegister(private val productions: ProductionRegister) {
         /**
          * 自动生成的表
          */
-        return if (symbol.isNonTerminal()) {
-            findNonTerminalParser(symbol, lexer)
-        } else {
-            terminalParser
+        return when {
+            symbol.isNonTerminal() -> findNonTerminalParser(symbol, lexer)
+            symbol == Symbol.EMPTY -> emptyParser
+            else -> terminalParser
         }
     }
 
@@ -119,7 +120,8 @@ class ParserRegister(private val productions: ProductionRegister) {
                 throw ParseException("找不到 NonTerminal ${symbol.name}")
         val next = getSymbol(lexer.peek()) ?:
                 throw ParseException("找不到 Symbol ${lexer.peek()}")
-        val production = table.getTable(nonTerminal, next)
+        val production = table.getTable(nonTerminal, next) ?:
+                throw ParseException("找不到对应的 Production $nonTerminal -> $next")
         return defaults[production] ?: throw ParseException("找不到对应的Parser $production")
     }
 
@@ -129,7 +131,7 @@ class ParserRegister(private val productions: ProductionRegister) {
     private fun getSymbol(token: Token): Symbol? = when {
         token.isNumber -> findType(NumberLiteral::class)
         token.isString -> findType(StringLiteral::class)
-        // 没有找到对应符号时作为 id 解析
+    // 没有找到对应符号时作为 id 解析
         token.isIdentifier -> productions.getSymbol(token.name) ?: productions.getSymbol("id")
         token == Token.EOF -> Symbol.END
         else -> throw ParseException("token 类型不匹配 $token")
@@ -199,5 +201,8 @@ class ParserRegister(private val productions: ProductionRegister) {
         }
     }
 
+    private inner class EmptyParser : Parser() {
+        override fun parseList(lexer: Lexer): List<ASTree> = emptyList()
+    }
 
 }

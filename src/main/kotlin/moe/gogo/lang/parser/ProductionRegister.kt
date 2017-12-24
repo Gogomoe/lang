@@ -58,7 +58,9 @@ class ProductionRegister {
             symbols.map { getOrCreateSymbol(it) }
 
     private fun getOrCreateSymbol(name: String): Symbol =
-            if (isNonTerminalName(name)) {
+            if (name == Symbol.EMPTY.name){
+                Symbol.EMPTY
+            } else if (isNonTerminalName(name)) {
                 getOrCreateNonTerminal(name).symbol
             } else {
                 getOrCreateTerminalSymbol(name)
