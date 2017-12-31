@@ -174,7 +174,10 @@ class ParserRegister(private val productions: ProductionRegister) {
         fun squeezeResults(results: MutableList<ASTree>) {
             val builder = builder[production.nonTerminal.symbol]
             if (builder != null) {
-                val tree = builder(results)
+                /**
+                 * 拷贝一份数组构建新树
+                 */
+                val tree = builder(results.toList())
                 results.clear()
                 results.add(tree)
             }

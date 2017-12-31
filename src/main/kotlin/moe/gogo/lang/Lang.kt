@@ -79,6 +79,7 @@ private fun builderParsers(): ParserRegister {
 //    register.defineBuilder("ExpOrBlock", ::expOrBlock)
 
     register.defineBuilder("Factor", ::factor)
+    register.defineBuilder("FactorWithoutIf", ::factor)
 
     val expr = buildExprParser(register, productions)
     register.register("Exp", expr)
@@ -157,7 +158,7 @@ private fun buildProductions(): ProductionRegister {
 fun main(args: Array<String>) {
     val parsers = builderParsers()
     val p = parsers.findParser("Exp")!!
-    val lexer = Lexer("3 * if(a > b && a > c) a else if(b > c) b else c".trimMargin().reader(), createLexicon())
+    val lexer = Lexer("3 * if(a > b && a > c) -a else if(b > c) -b else -c".trimMargin().reader(), createLexicon())
     val tree = p.parse(lexer)
     val env = BasicEnvironment()
     env.putNew("a", 4)

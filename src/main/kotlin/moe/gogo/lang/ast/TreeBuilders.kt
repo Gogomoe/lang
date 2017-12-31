@@ -5,6 +5,8 @@ import moe.gogo.lang.ast.IfStatement.ElseStatement
 
 fun factor(list: List<ASTree>): ASTree = when {
     list[0] is Identifier && (list[0] as Identifier).id == "(" -> list[1]
+    list[0] is Identifier && (list[0] as Identifier).id == "-" -> UnaryMinus(list)
+    list[0] is Identifier && (list[0] as Identifier).id == "!" -> UnaryNot(list)
     else -> list[0]
 }
 
