@@ -75,16 +75,20 @@ private fun builderParsers(): ParserRegister {
     register.defineBuilder("IfExp", ::ifExpBuilder)
     register.defineBuilder("IfExp_ElseIfOrElse", ::ifExpElseIfOrElse)
 
-    register.defineBuilder("ExpOrBlock", ::expOrBlock)
+    register.defineBuilder("ExpWithOutIfOrBlock", ::expOrBlock)
+//    register.defineBuilder("ExpOrBlock", ::expOrBlock)
+
     register.defineBuilder("Factor", ::factor)
 
     val expr = buildExprParser(register, productions)
     register.register("Exp", expr)
+    val exprWithoutIf = buildExprParser(register, productions, "FactorWithoutIf")
+    register.register("ExpWithoutIf", exprWithoutIf)
     return register
 }
 
-fun buildExprParser(register: ParserRegister, productions: ProductionRegister): Parser =
-        ExpressionParser(register, productions).also {
+fun buildExprParser(register: ParserRegister, productions: ProductionRegister, factorName: String = "Factor"): Parser =
+        ExpressionParser(register, productions, factorName).also {
             it.defineOperator("=", 1, RIGHT)
             it.defineOperator("+=", 2, RIGHT)
             it.defineOperator("-=", 2, RIGHT)
@@ -109,29 +113,39 @@ fun buildExprParser(register: ParserRegister, productions: ProductionRegister): 
 private fun buildProductions(): ProductionRegister {
     val register = ProductionRegister()
     register.register("Exp -> Factor")
+    register.register("ExpWithoutIf -> FactorWithoutIf")
 
     register.register("Factor -> Primary")
     register.register("Factor -> - Primary")
     register.register("Factor -> ! Primary")
     register.register("Factor -> ( Exp )")
 
-    register.register("Primary -> number")
-    register.register("Primary -> string")
-    register.register("Primary -> id")
+    register.register("FactorWithoutIf -> PrimaryWithoutIf")
+    register.register("FactorWithoutIf -> - PrimaryWithoutIf")
+    register.register("FactorWithoutIf -> ! PrimaryWithoutIf")
+    register.register("FactorWithoutIf -> ( Exp )")
+
+    register.register("PrimaryWithoutIf -> number")
+    register.register("PrimaryWithoutIf -> string")
+    register.register("PrimaryWithoutIf -> id")
+
+    register.register("Primary -> PrimaryWithoutIf")
     register.register("Primary -> IfExp")
 
-    register.register("IfExp -> if ( Exp ) ExpOrBlock else IfExp_ElseIfOrElse")
-    register.register("IfExp_ElseIfOrElse -> ExpOrBlock")
-    register.register("IfExp_ElseIfOrElse -> if ( Exp ) ExpOrBlock else IfExp_ElseIfOrElse")
+    register.register("IfExp -> if ( Exp ) ExpWithOutIfOrBlock else IfExp_ElseIfOrElse")
+    register.register("IfExp_ElseIfOrElse -> ExpWithOutIfOrBlock")
+    register.register("IfExp_ElseIfOrElse -> if ( Exp ) ExpWithOutIfOrBlock else IfExp_ElseIfOrElse")
 
-    register.register("If -> if ( Exp ) ExpOrBlock ElseIfOrElse")
+    register.register("If -> if ( Exp ) ExpWithOutIfOrBlock ElseIfOrElse")
     register.register("ElseIfOrElse -> ε")
     register.register("ElseIfOrElse -> else SubIfOrElseBlock")
-    register.register("SubIfOrElseBlock -> ExpOrBlock")
-    register.register("SubIfOrElseBlock -> if ( Exp ) ExpOrBlock ElseIfOrElse")
+    register.register("SubIfOrElseBlock -> ExpWithOutIfOrBlock")
+    register.register("SubIfOrElseBlock -> if ( Exp ) ExpWithOutIfOrBlock ElseIfOrElse")
 
-    register.register("ExpOrBlock -> Exp")
-    register.register("ExpOrBlock -> { Statements }")
+    register.register("ExpWithOutIfOrBlock -> ExpWithoutIf")
+    register.register("ExpWithOutIfOrBlock -> { Statements }")
+//    register.register("ExpOrBlock -> Exp")
+//    register.register("ExpOrBlock -> { Statements }")
 
     register.register("Statements -> Statement Statements")
     register.register("Statements -> ε")
@@ -141,7 +155,6 @@ private fun buildProductions(): ProductionRegister {
 
 
 fun main(args: Array<String>) {
-    // TODO 修复解析表的Warning
     val parsers = builderParsers()
     val p = parsers.findParser("Exp")!!
     val lexer = Lexer("3 * if(a > b && a > c) a else if(b > c) b else c".trimMargin().reader(), createLexicon())
