@@ -21,9 +21,9 @@ class ExpressionParserTest : StringSpec() {
         "complex expression"{
             val productions = ProductionRegister()
             productions.register("Exp")
-            productions.register("Factor -> number")
-            productions.register("Factor -> id")
-            productions.register("Factor -> If")
+            productions.register("TreeBuilders -> number")
+            productions.register("TreeBuilders -> id")
+            productions.register("TreeBuilders -> If")
             productions.register("If -> if ( Exp ) Exp else Exp")
 
             val register = ParserRegister(productions)
@@ -32,9 +32,9 @@ class ExpressionParserTest : StringSpec() {
             expr.defineOperator("+", 2, LEFT)
             expr.defineOperator("*", 3, LEFT)
 
-            register.defineType("number", NumberLiteral::class)
-            register.defineType("id", Identifier::class)
-            register.defineType("If", IfExpr::class)
+            register.defineBuilder("number", ::NumberLiteral)
+            register.defineBuilder("id", ::Identifier)
+            register.defineBuilder("If", ::IfExpr)
             register.register("Exp", expr)
 
             val parser = register.findParser("Exp")!!
@@ -60,7 +60,7 @@ private fun builderParsers(): ParserRegister {
     val productions = buildProductions()
     val register = ParserRegister(productions)
     val expr = buildExprParser(register, productions)
-    register.defineType("number", NumberLiteral::class)
+    register.defineBuilder("number", ::NumberLiteral)
     register.register("Exp", expr)
     return register
 }
@@ -73,7 +73,7 @@ fun buildExprParser(register: ParserRegister, productions: ProductionRegister): 
 
 private fun buildProductions(): ProductionRegister {
     val register = ProductionRegister()
-    register.register("Factor -> number")
+    register.register("TreeBuilders -> number")
     register.register("Exp")
     return register
 }

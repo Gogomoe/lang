@@ -32,13 +32,13 @@ class ParserTable internal constructor(private val productions: Set<Production>)
 
         nonTerminals.forEach {
             output(it.name)
-            output(it.first,50)
+            output(it.first,100)
             println()
         }
         println()
         nonTerminals.forEach {
             output(it.name)
-            output(it.follow,50)
+            output(it.follow,100)
             println()
         }
 

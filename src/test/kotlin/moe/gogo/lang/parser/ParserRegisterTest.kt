@@ -21,16 +21,16 @@ class ParserRegisterTest : StringSpec() {
 
 private fun builderParsers(): ParserRegister {
     val register = ParserRegister(buildProductions())
-    register.defineType("number", NumberLiteral::class)
-    register.defineType("Exp", BinaryExpr::class)
+    register.defineBuilder("number", ::NumberLiteral)
+    register.defineBuilder("Exp", ::BinaryExpr)
     return register
 }
 
 private fun buildProductions(): ProductionRegister {
     val register = ProductionRegister()
-    register.register("Exp -> Factor OpFactor")
-    register.register("Factor -> number")
-    register.register("OpFactor -> + Factor OpFactor")
+    register.register("Exp -> TreeBuilders OpFactor")
+    register.register("TreeBuilders -> number")
+    register.register("OpFactor -> + TreeBuilders OpFactor")
     register.register("OpFactor -> ε")
     return register
 }

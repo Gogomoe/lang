@@ -2,11 +2,8 @@ package moe.gogo.lang.parser
 
 import moe.gogo.lang.ast.ASTree
 import moe.gogo.lang.ast.Identifier
-import moe.gogo.lang.ast.NumberLiteral
-import moe.gogo.lang.ast.StringLiteral
 import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.lexer.Token
-import kotlin.reflect.KClass
 
 /**
  * 本类是Parser解析的核心类
@@ -18,7 +15,7 @@ import kotlin.reflect.KClass
  * 然而这种方法存在两个问题。
  *
  * 一是某些语法对应相应的 ASTree，比如 If 语句有对应的 ASTree，
- * 这时应通过[defineType]方法来定义非终止符对应生成的 ASTree 类型。
+ * 这时应通过[defineBuilder]方法来定义非终止符对应生成的 ASTree 的构造器。
  *
  * 二是解析表达式时为了考虑优先级，LL文法会显得很复杂。
  * 这时采取了另一种解析表达式的方法，[ExpressionParser]类可以定义二元运算符的优先级并解析表达式。
@@ -35,7 +32,7 @@ class ParserRegister(private val productions: ProductionRegister) {
     private val table = productions.make()
 
     private val parsers = mutableMapOf<Symbol, Parser>()
-    private val builder = mutableMapOf<Symbol, KClass<out ASTree>>()
+    private val builder = mutableMapOf<Symbol, (Any) -> ASTree>()
     private val defaults = mutableMapOf<Production, Parser>()
 
     private val terminalParser = TerminalParser()
@@ -61,12 +58,14 @@ class ParserRegister(private val productions: ProductionRegister) {
     /**
      * 定义某个非终止符对应的树
      * @param name 非终止符的name
-     * @param treeType 对应生成的ASTree的类型
+     * @param builder 对应生成的ASTree的构造器
      */
-    fun defineType(name: String, treeType: KClass<out ASTree>) {
+    fun <T : Any> defineBuilder(name: String, builder: (T) -> ASTree) {
         val symbol = productions.getSymbol(name) ?:
                 throw ParseException("找不到 Symbol $name")
-        builder[symbol] = treeType
+        @Suppress("UNCHECKED_CAST")
+        builder as (Any) -> ASTree
+        this.builder.put(symbol, builder)
     }
 
     /**
@@ -129,21 +128,12 @@ class ParserRegister(private val productions: ProductionRegister) {
      * 把 token 转换为相应的 Symbol
      */
     private fun getSymbol(token: Token): Symbol? = when {
-        token.isNumber -> findType(NumberLiteral::class)
-        token.isString -> findType(StringLiteral::class)
+        token.isNumber -> productions.getSymbol("number")
+        token.isString -> productions.getSymbol("string")
     // 没有找到对应符号时作为 id 解析
         token.isIdentifier -> productions.getSymbol(token.name) ?: productions.getSymbol("id")
         token == Token.EOF -> Symbol.END
         else -> throw ParseException("token 类型不匹配 $token")
-    }
-
-    private fun findType(kClass: KClass<out ASTree>): Symbol? {
-        for ((k, v) in builder) {
-            if (v == kClass) {
-                return k
-            }
-        }
-        return null
     }
 
     /**
@@ -182,10 +172,9 @@ class ParserRegister(private val productions: ProductionRegister) {
          * 根据类型从列表重新生成树
          */
         fun squeezeResults(results: MutableList<ASTree>) {
-            val type = builder[production.nonTerminal.symbol]
-            if (type != null) {
-                val c = type.java.getConstructor(List::class.java)!!
-                val tree = c.newInstance(results)
+            val builder = builder[production.nonTerminal.symbol]
+            if (builder != null) {
+                val tree = builder(results)
                 results.clear()
                 results.add(tree)
             }
@@ -195,9 +184,8 @@ class ParserRegister(private val productions: ProductionRegister) {
     private inner class TerminalParser : Parser() {
         override fun parseList(lexer: Lexer): List<ASTree> {
             val token = lexer.read()
-            val type = builder[getSymbol(token)] ?: return listOf(Identifier(token))
-            val c = type.java.getConstructor(Token::class.java)!!
-            return listOf(c.newInstance(token))
+            val builder = builder[getSymbol(token)] ?: return listOf(Identifier(token))
+            return listOf(builder(token))
         }
     }
 
