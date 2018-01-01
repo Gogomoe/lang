@@ -5,7 +5,7 @@ import moe.gogo.lang.lexer.Token
 
 class NumberLiteral(override val token: Token) : ASTLeaf(token) {
 
-    val number: Int = token.intValue
+    private val number: Int = token.intValue
 
     override fun eval(env: Environment): Any? = number
 

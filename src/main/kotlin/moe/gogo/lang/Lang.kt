@@ -1,9 +1,12 @@
 package moe.gogo.lang
 
+import moe.gogo.lang.ast.DeclareStmnt
 import moe.gogo.lang.ast.IfStatement.Companion.elseIfOrElseBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.ifBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.subIfOrElseBlockBuilder
 import moe.gogo.lang.ast.NumberLiteral
+import moe.gogo.lang.ast.Statement
+import moe.gogo.lang.ast.Statements.Companion.statements
 import moe.gogo.lang.ast.StringLiteral
 import moe.gogo.lang.ast.expOrBlock
 import moe.gogo.lang.ast.factor
@@ -24,6 +27,7 @@ import moe.gogo.lang.parser.ProductionRegister
 
 fun createLexicon(): Lexicon {
     val lexicon = Lexicon()
+    lexicon.defineString("var")
     lexicon.defineString("if")
     lexicon.defineString("else")
     lexicon.defineString("for")
@@ -69,6 +73,16 @@ private fun builderParsers(): ParserRegister {
     register.defineBuilder("number", ::NumberLiteral)
     register.defineBuilder("string", ::StringLiteral)
 
+    register.defineBuilder("Factor", ::factor)
+    register.defineBuilder("FactorWithoutIf", ::factor)
+
+    val expr = buildExprParser(register, productions)
+    register.register("Exp", expr)
+    val exprWithoutIf = buildExprParser(register, productions, "FactorWithoutIf")
+    register.register("ExpWithoutIf", exprWithoutIf)
+
+    register.defineBuilder("Declare", ::DeclareStmnt)
+
     register.defineBuilder("If", ::ifBuilder)
     register.defineBuilder("SubIfOrElseBlock", ::subIfOrElseBlockBuilder)
     register.defineBuilder("ElseIfOrElse", ::elseIfOrElseBuilder)
@@ -78,13 +92,10 @@ private fun builderParsers(): ParserRegister {
     register.defineBuilder("ExpWithOutIfOrBlock", ::expOrBlock)
 //    register.defineBuilder("ExpOrBlock", ::expOrBlock)
 
-    register.defineBuilder("Factor", ::factor)
-    register.defineBuilder("FactorWithoutIf", ::factor)
+    register.defineBuilder("Statement", ::Statement)
+    register.defineBuilder("Statements", ::statements)
 
-    val expr = buildExprParser(register, productions)
-    register.register("Exp", expr)
-    val exprWithoutIf = buildExprParser(register, productions, "FactorWithoutIf")
-    register.register("ExpWithoutIf", exprWithoutIf)
+
     return register
 }
 
@@ -113,6 +124,11 @@ fun buildExprParser(register: ParserRegister, productions: ProductionRegister, f
 
 private fun buildProductions(): ProductionRegister {
     val register = ProductionRegister()
+
+    /**
+     * Expression
+     */
+
     register.register("Exp -> Factor")
     register.register("ExpWithoutIf -> FactorWithoutIf")
 
@@ -133,6 +149,18 @@ private fun buildProductions(): ProductionRegister {
     register.register("Primary -> PrimaryWithoutIf")
     register.register("Primary -> IfExp")
 
+    /**
+     * Declare and Assign
+     */
+
+    register.register("Declare -> var id AssignOrNull")
+    register.register("AssignOrNull -> ε")
+    register.register("AssignOrNull -> = Exp")
+
+    /**
+     * If
+     */
+
     register.register("IfExp -> if ( Exp ) ExpWithOutIfOrBlock else IfExp_ElseIfOrElse")
     register.register("IfExp_ElseIfOrElse -> ExpWithOutIfOrBlock")
     register.register("IfExp_ElseIfOrElse -> if ( Exp ) ExpWithOutIfOrBlock else IfExp_ElseIfOrElse")
@@ -143,28 +171,42 @@ private fun buildProductions(): ProductionRegister {
     register.register("SubIfOrElseBlock -> ExpWithOutIfOrBlock")
     register.register("SubIfOrElseBlock -> if ( Exp ) ExpWithOutIfOrBlock ElseIfOrElse")
 
+    /**
+     * Blocks
+     */
+
     register.register("ExpWithOutIfOrBlock -> ExpWithoutIf")
     register.register("ExpWithOutIfOrBlock -> { Statements }")
 //    register.register("ExpOrBlock -> Exp")
 //    register.register("ExpOrBlock -> { Statements }")
 
+    /**
+     * Statements
+     */
+
     register.register("Statements -> Statement Statements")
     register.register("Statements -> ε")
+
+    register.register("Statement -> Declare")
     register.register("Statement -> Exp")
+
     return register
 }
 
 
 fun main(args: Array<String>) {
     val parsers = builderParsers()
-    val p = parsers.findParser("Exp")!!
-    val lexer = Lexer("3 * if(a > b && a > c) -a else if(b > c) -b else -c".trimMargin().reader(), createLexicon())
+    val p = parsers.findParser("Statements")!!
+    val lexer = Lexer("""
+        |var a = 4
+        |var b = 6
+        |var c = 5
+        |3 * - if(a > b && a > c) a else if(b > c) b else c""".trimMargin().reader(), createLexicon())
     val tree = p.parse(lexer)
     val env = BasicEnvironment()
-    env.putNew("a", 4)
-    env.putNew("b", 6)
-    env.putNew("c", 5)
-    println(tree.eval(env)) //TODO delete it
+    println(tree)
+    println("--------result--------")
+    println(tree.eval(env))
 }
 
 

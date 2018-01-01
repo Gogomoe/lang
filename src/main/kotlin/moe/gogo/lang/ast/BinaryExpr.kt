@@ -6,12 +6,15 @@ import moe.gogo.lang.toBool
 
 class BinaryExpr(list: List<ASTree>) : ASTList(list) {
 
-    val left = list[0]
-    val right = list[2]
+    private val left = list[0]
+    private val right = list[2]
 
-    val operator = (list[1] as ASTLeaf).token.text
+    private val operator = (list[1] as ASTLeaf).token.text
 
     override fun eval(env: Environment): Any? {
+        if (left is Identifier && operator == "=") {
+            return evalAssign(env)
+        }
         val l = left.eval(env)
         val r = right.eval(env)
         if ((l is String || r is String) && operator == "+") {
@@ -26,6 +29,10 @@ class BinaryExpr(list: List<ASTree>) : ASTList(list) {
             else -> throw LangRuntimeException("不支持运算 ${toString()}")
 
         }
+    }
+
+    private fun evalAssign(env: Environment): Any? = right.eval(env).let {
+        env.set((left as Identifier).id, it)
     }
 
     private fun evalInt(r: Int, l: Int, operator: String): Any? = when (operator) {

@@ -4,10 +4,10 @@ import moe.gogo.lang.Environment
 import moe.gogo.lang.toBool
 
 
-class IfStatement(val condition: ASTree,
-                  val accept: ASTree,
-                  val elses: List<ElseIfStatement> = emptyList(),
-                  val reject: ASTree? = null)
+class IfStatement(private val condition: ASTree,
+                  private val accept: ASTree,
+                  private val elses: List<ElseIfStatement> = emptyList(),
+                  private val reject: ASTree? = null)
     : ASTList(listOfNotNull(condition, accept, *elses.toTypedArray(), reject)) {
 
     override fun eval(env: Environment): Any? {
@@ -43,9 +43,14 @@ class IfStatement(val condition: ASTree,
         override fun eval(env: Environment): Any? = condition.eval(env)
     }
 
-    class ElseStatement(val block: ASTree) : ASTList(listOf(block)) {
+    class ElseStatement(private val block: ASTree) : ASTList(listOf(block)) {
 
         override fun eval(env: Environment): Any? = block.eval(env)
+
+        override fun toString(): String {
+            return block.toString()
+        }
+
     }
 
     companion object {
