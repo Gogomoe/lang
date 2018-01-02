@@ -4,7 +4,7 @@ import moe.gogo.lang.Environment
 
 class Statements(list: List<ASTree>) : ASTList(list) {
 
-    private val statements = list
+    internal val statements = list
 
     override fun eval(env: Environment): Any? {
         var res: Any? = null

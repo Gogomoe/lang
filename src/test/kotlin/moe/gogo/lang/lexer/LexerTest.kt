@@ -34,7 +34,7 @@ class LexerTest : StringSpec() {
             lexer.read().text shouldBe "b"
             lexer.read().text shouldBe "="
             lexer.read().name shouldBe "("
-            lexer.read().name shouldBe "name"
+            lexer.read().name shouldBe "id"
             lexer.read().name shouldBe "+"
             lexer.read().name shouldBe "number"
             lexer.read().name shouldBe ")"

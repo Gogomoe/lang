@@ -61,7 +61,7 @@ fun createLexicon(): Lexicon {
 
     lexicon.defineArgument("number", Regex("""\d+"""), NumToken::class)
     lexicon.defineArgument("string", Regex("""".*?[^\\](\\\\)*""""), StrToken::class)
-    lexicon.defineArgument("name", Regex("""[\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}][\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Cf}]*"""), IdToken::class)
+    lexicon.defineArgument("id", Regex("""[\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}][\p{Lu}\p{Ll}\p{Lt}\p{Lm}\p{Lo}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}\p{Cf}]*"""), IdToken::class)
 
     return lexicon
 }
@@ -89,8 +89,7 @@ private fun builderParsers(): ParserRegister {
     register.defineBuilder("IfExp", ::ifExpBuilder)
     register.defineBuilder("IfExp_ElseIfOrElse", ::ifExpElseIfOrElse)
 
-    register.defineBuilder("ExpWithOutIfOrBlock", ::expOrBlock)
-//    register.defineBuilder("ExpOrBlock", ::expOrBlock)
+    register.defineBuilder("ExpWithoutIfOrBlock", ::expOrBlock)
 
     register.defineBuilder("Statement", ::Statement)
     register.defineBuilder("Statements", ::statements)
@@ -161,24 +160,22 @@ private fun buildProductions(): ProductionRegister {
      * If
      */
 
-    register.register("IfExp -> if ( Exp ) ExpWithOutIfOrBlock else IfExp_ElseIfOrElse")
-    register.register("IfExp_ElseIfOrElse -> ExpWithOutIfOrBlock")
-    register.register("IfExp_ElseIfOrElse -> if ( Exp ) ExpWithOutIfOrBlock else IfExp_ElseIfOrElse")
+    register.register("IfExp -> if ( Exp ) ExpWithoutIfOrBlock else IfExp_ElseIfOrElse")
+    register.register("IfExp_ElseIfOrElse -> ExpWithoutIfOrBlock")
+    register.register("IfExp_ElseIfOrElse -> if ( Exp ) ExpWithoutIfOrBlock else IfExp_ElseIfOrElse")
 
-    register.register("If -> if ( Exp ) ExpWithOutIfOrBlock ElseIfOrElse")
+    register.register("If -> if ( Exp ) ExpWithoutIfOrBlock ElseIfOrElse")
     register.register("ElseIfOrElse -> ε")
     register.register("ElseIfOrElse -> else SubIfOrElseBlock")
-    register.register("SubIfOrElseBlock -> ExpWithOutIfOrBlock")
-    register.register("SubIfOrElseBlock -> if ( Exp ) ExpWithOutIfOrBlock ElseIfOrElse")
+    register.register("SubIfOrElseBlock -> ExpWithoutIfOrBlock")
+    register.register("SubIfOrElseBlock -> if ( Exp ) ExpWithoutIfOrBlock ElseIfOrElse")
 
     /**
      * Blocks
      */
 
-    register.register("ExpWithOutIfOrBlock -> ExpWithoutIf")
-    register.register("ExpWithOutIfOrBlock -> { Statements }")
-//    register.register("ExpOrBlock -> Exp")
-//    register.register("ExpOrBlock -> { Statements }")
+    register.register("ExpWithoutIfOrBlock -> ExpWithoutIf")
+    register.register("ExpWithoutIfOrBlock -> { Statements }")
 
     /**
      * Statements
@@ -212,7 +209,7 @@ fun main(args: Array<String>) {
 
 fun Any?.toBool() = when (this) {
     is Boolean -> this
-    is Number -> this.toInt() == 0
+    is Number -> this.toInt() != 0
     is String -> this.isNotBlank()
     else -> this != null
 }

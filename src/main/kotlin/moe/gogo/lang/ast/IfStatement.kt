@@ -4,10 +4,10 @@ import moe.gogo.lang.Environment
 import moe.gogo.lang.toBool
 
 
-class IfStatement(private val condition: ASTree,
-                  private val accept: ASTree,
-                  private val elses: List<ElseIfStatement> = emptyList(),
-                  private val reject: ASTree? = null)
+class IfStatement internal constructor(internal val condition: ASTree,
+                                       internal val accept: ASTree,
+                                       internal val elses: List<ElseIfStatement> = emptyList(),
+                                       internal val reject: ASTree? = null)
     : ASTList(listOfNotNull(condition, accept, *elses.toTypedArray(), reject)) {
 
     override fun eval(env: Environment): Any? {
@@ -30,20 +30,20 @@ class IfStatement(private val condition: ASTree,
         elses.forEach { it ->
             elseIfs.append("else if (${it.condition}) { ${it.accept} }\n")
         }
-        val elses = if (reject != null) "else" + reject else ""
+        val elses = if (reject != null) "else { $reject }" else ""
         return "if ($condition) { $accept }\n$elseIfs$elses"
     }
 
-    class ElseIfStatement(val condition: ASTree,
-                          val accept: ASTree,
-                          val elses: List<ElseIfStatement> = emptyList(),
-                          val reject: ASTree? = null)
-        : ASTList(listOfNotNull(condition, accept, *elses.toTypedArray(), reject)) {
+    /**
+     * 构建 If 树时生成的 ElseIfs 树
+     */
+    internal class ElseIfStatement(val condition: ASTree,
+                                   val accept: ASTree,
+                                   val elses: List<ElseIfStatement> = emptyList(),
+                                   val reject: ASTree? = null)
+        : ASTList(listOfNotNull(condition, accept, *elses.toTypedArray(), reject))
 
-        override fun eval(env: Environment): Any? = condition.eval(env)
-    }
-
-    class ElseStatement(private val block: ASTree) : ASTList(listOf(block)) {
+    internal class ElseStatement(private val block: ASTree) : ASTList(listOf(block)) {
 
         override fun eval(env: Environment): Any? = block.eval(env)
 
@@ -55,21 +55,27 @@ class IfStatement(private val condition: ASTree,
 
     companion object {
         fun ifBuilder(list: List<ASTree>): ASTree {
+            // If -> if ( Exp ) ExpWithoutIfOrBlock ElseIfOrElse
+
             val exp = list[2]
             val blk = list[4]
-            val elses = list.getOrNull(5)
-            return if (elses != null) {
-                if (elses is ElseIfStatement) {
-                    IfStatement(exp, blk, listOf(*elses.elses.toTypedArray(), elses), elses.reject)
-                } else {
-                    IfStatement(exp, blk, emptyList(), elses)
-                }
+
+            // 没有 ElseIf 和 Else 的情况直接构建
+            val elses = list.getOrNull(5) ?: return IfStatement(exp, blk)
+
+            return if (elses is ElseIfStatement) {
+                IfStatement(exp, blk, listOf(*elses.elses.toTypedArray(), elses), elses.reject)
             } else {
-                IfStatement(exp, blk)
+                // 没有 ElseIf 只有 Else
+                IfStatement(exp, blk, emptyList(), elses)
             }
+
         }
 
         fun elseIfOrElseBuilder(list: List<ASTree>): ASTree {
+            // ElseIfOrElse -> ε
+            // ElseIfOrElse -> else SubIfOrElseBlock
+
             val i = list[0]
             return if (i is Identifier && i.id == "else") {
                 list[1]
@@ -79,22 +85,26 @@ class IfStatement(private val condition: ASTree,
         }
 
         fun subIfOrElseBlockBuilder(list: List<ASTree>): ASTree {
+            // SubIfOrElseBlock -> ExpWithoutIfOrBlock
+            // SubIfOrElseBlock -> if ( Exp ) ExpWithoutIfOrBlock ElseIfOrElse
+
             val i = list[0]
-            return if (i is Identifier && i.id == "if") {
-                val exp = list[2]
-                val blk = list[4]
-                val elses = list.getOrNull(5)
-                if (elses != null) {
-                    if (elses is ElseIfStatement) {
-                        ElseIfStatement(exp, blk, listOf(*elses.elses.toTypedArray(), elses), elses.reject)
-                    } else {
-                        ElseIfStatement(exp, blk, emptyList(), elses)
-                    }
-                } else {
-                    ElseIfStatement(exp, blk)
-                }
+
+            // 是 Else 语句的情况
+            val isElse = i !is Identifier || i.id != "if"
+            if (isElse) {
+                return ElseStatement(list[0])
+            }
+            val exp = list[2]
+            val blk = list[4]
+            // 当前语句是 ElseIf 且后面没有 ElseIf 或 Else
+            val elses = list.getOrNull(5) ?: return ElseIfStatement(exp, blk)
+
+            return if (elses is ElseIfStatement) {
+                ElseIfStatement(exp, blk, listOf(*elses.elses.toTypedArray(), elses), elses.reject)
             } else {
-                ElseStatement(list[0])
+                // 后一个语句是 Else
+                ElseIfStatement(exp, blk, emptyList(), elses)
             }
         }
 

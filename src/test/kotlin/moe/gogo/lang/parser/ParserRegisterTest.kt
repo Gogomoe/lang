@@ -28,9 +28,9 @@ private fun builderParsers(): ParserRegister {
 
 private fun buildProductions(): ProductionRegister {
     val register = ProductionRegister()
-    register.register("Exp -> TreeBuilders OpFactor")
-    register.register("TreeBuilders -> number")
-    register.register("OpFactor -> + TreeBuilders OpFactor")
+    register.register("Exp -> Factor OpFactor")
+    register.register("Factor -> number")
+    register.register("OpFactor -> + Factor OpFactor")
     register.register("OpFactor -> ε")
     return register
 }

@@ -21,9 +21,9 @@ class ExpressionParserTest : StringSpec() {
         "complex expression"{
             val productions = ProductionRegister()
             productions.register("Exp")
-            productions.register("TreeBuilders -> number")
-            productions.register("TreeBuilders -> id")
-            productions.register("TreeBuilders -> If")
+            productions.register("Factor -> number")
+            productions.register("Factor -> id")
+            productions.register("Factor -> If")
             productions.register("If -> if ( Exp ) Exp else Exp")
 
             val register = ParserRegister(productions)
@@ -73,7 +73,7 @@ fun buildExprParser(register: ParserRegister, productions: ProductionRegister): 
 
 private fun buildProductions(): ProductionRegister {
     val register = ProductionRegister()
-    register.register("TreeBuilders -> number")
+    register.register("Factor -> number")
     register.register("Exp")
     return register
 }

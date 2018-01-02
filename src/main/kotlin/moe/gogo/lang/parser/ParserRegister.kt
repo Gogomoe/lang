@@ -130,8 +130,7 @@ class ParserRegister(private val productions: ProductionRegister) {
     private fun getSymbol(token: Token): Symbol? = when {
         token.isNumber -> productions.getSymbol("number")
         token.isString -> productions.getSymbol("string")
-    // 没有找到对应符号时作为 id 解析
-        token.isIdentifier -> productions.getSymbol(token.name) ?: productions.getSymbol("id")
+        token.isIdentifier -> productions.getSymbol(token.name)
         token == Token.EOF -> Symbol.END
         else -> throw ParseException("token 类型不匹配 $token")
     }
