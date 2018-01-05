@@ -28,7 +28,7 @@ class ProductionRegister {
         val arr = splitProductionString(string)
         if (arr.size == 1) {
             val non = getOrCreateNonTerminal(arr[0])
-            productions.add(Production(non, emptyList()))
+            productions.add(Production(non, emptyList(), string))
             return
         }
         if (arr.size < 3 || arr[1] != "->" || !isNonTerminalName(arr[0])) {
@@ -36,7 +36,7 @@ class ProductionRegister {
         }
         val nonTerminal = getOrCreateNonTerminal(arr[0])
         val symbols = parseToSymbol(arr.subList(2, arr.size))
-        val production = Production(nonTerminal, symbols)
+        val production = Production(nonTerminal, symbols, string)
         productions.add(production)
     }
 
@@ -58,7 +58,7 @@ class ProductionRegister {
             symbols.map { getOrCreateSymbol(it) }
 
     private fun getOrCreateSymbol(name: String): Symbol =
-            if (name == Symbol.EMPTY.name){
+            if (name == Symbol.EMPTY.name) {
                 Symbol.EMPTY
             } else if (isNonTerminalName(name)) {
                 getOrCreateNonTerminal(name).symbol

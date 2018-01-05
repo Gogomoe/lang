@@ -4,7 +4,7 @@ import moe.gogo.lang.Environment
 import moe.gogo.lang.LangRuntimeException
 import moe.gogo.lang.toBool
 
-class BinaryExpr(list: List<ASTree>) : ASTList(list) {
+class BinaryExp(list: List<ASTree>) : ASTList(list) {
 
     private val left = list[0]
     private val right = list[2]

@@ -3,6 +3,7 @@ package moe.gogo.lang.parser
 import moe.gogo.lang.ast.ASTree
 import moe.gogo.lang.ast.Identifier
 import moe.gogo.lang.lexer.Lexer
+import moe.gogo.lang.lexer.Lexicon
 import moe.gogo.lang.lexer.Token
 
 /**
@@ -31,7 +32,7 @@ class ParserRegister(private val productions: ProductionRegister) {
 
     private val table = productions.make()
 
-    private val parsers = mutableMapOf<Symbol, Parser>()
+    private val parsers = mutableMapOf<Symbol, ParserRegister.(Lexer) -> Parser>()
     private val builder = mutableMapOf<Symbol, (Any) -> ASTree>()
     private val defaults = mutableMapOf<Production, Parser>()
 
@@ -52,7 +53,18 @@ class ParserRegister(private val productions: ProductionRegister) {
     fun register(name: String, parser: Parser) {
         val symbol = productions.getSymbol(name) ?:
                 throw ParseException("找不到 Symbol $name")
-        parsers[symbol] = parser
+        parsers[symbol] = { parser }
+    }
+
+    /**
+     * 注册某个非终止符对应的Parser
+     * @param name 非终止符的name
+     * @param parser 对应的parser
+     */
+    fun register(name: String, func: ParserRegister.(Lexer) -> Parser) {
+        val symbol = productions.getSymbol(name) ?:
+                throw ParseException("找不到 Symbol $name")
+        parsers[symbol] = func
     }
 
     /**
@@ -80,7 +92,7 @@ class ParserRegister(private val productions: ProductionRegister) {
     fun findParser(name: String): Parser? {
         val symbol = productions.getSymbol(name)!!
         if (parsers.containsKey(symbol)) {
-            return parsers[symbol]
+            return parsers[symbol]?.invoke(this, Lexer("".reader(), Lexicon()))
         }
         /**
          * 没有注册时找到第一个产生式
@@ -102,7 +114,7 @@ class ParserRegister(private val productions: ProductionRegister) {
          */
         val parser = parsers[symbol]
         if (parser != null) {
-            return parser
+            return parser(lexer)
         }
         /**
          * 自动生成的表
@@ -112,6 +124,14 @@ class ParserRegister(private val productions: ProductionRegister) {
             symbol == Symbol.EMPTY -> emptyParser
             else -> terminalParser
         }
+    }
+
+    /**
+     * 根据产生式找到生成的 Parser
+     */
+    fun findDefaultParser(production: String): Parser? {
+        val pro = productions.productions.find { it.production == production }
+        return defaults[pro]
     }
 
     private fun findNonTerminalParser(symbol: Symbol, lexer: Lexer): Parser {

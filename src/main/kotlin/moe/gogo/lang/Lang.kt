@@ -1,10 +1,13 @@
 package moe.gogo.lang
 
 import moe.gogo.lang.ast.DeclareStmnt
+import moe.gogo.lang.ast.ExpList.Companion.expList
+import moe.gogo.lang.ast.FunctionCallPostfix.Companion.functionCallPostfix
 import moe.gogo.lang.ast.IfStatement.Companion.elseIfOrElseBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.ifBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.subIfOrElseBlockBuilder
 import moe.gogo.lang.ast.NumberLiteral
+import moe.gogo.lang.ast.Postfixes.Companion.postfixes
 import moe.gogo.lang.ast.Statement
 import moe.gogo.lang.ast.Statements.Companion.statements
 import moe.gogo.lang.ast.StringLiteral
@@ -12,6 +15,7 @@ import moe.gogo.lang.ast.expOrBlock
 import moe.gogo.lang.ast.factor
 import moe.gogo.lang.ast.ifExpBuilder
 import moe.gogo.lang.ast.ifExpElseIfOrElse
+import moe.gogo.lang.ast.postfixesParser
 import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.lexer.Lexicon
 import moe.gogo.lang.lexer.Token.CommentToken
@@ -24,6 +28,7 @@ import moe.gogo.lang.parser.ExpressionParser.Association.RIGHT
 import moe.gogo.lang.parser.Parser
 import moe.gogo.lang.parser.ParserRegister
 import moe.gogo.lang.parser.ProductionRegister
+import moe.gogo.lang.type.Function
 
 fun createLexicon(): Lexicon {
     val lexicon = Lexicon()
@@ -81,6 +86,13 @@ private fun builderParsers(): ParserRegister {
     val exprWithoutIf = buildExprParser(register, productions, "FactorWithoutIf")
     register.register("ExpWithoutIf", exprWithoutIf)
 
+    register.defineBuilder("Postfixes", ::postfixes)
+    register.defineBuilder("FunctionCall", ::functionCallPostfix)
+
+    register.register("Postfixes", postfixesParser)
+
+    register.defineBuilder("ExpList", ::expList)
+
     register.defineBuilder("Declare", ::DeclareStmnt)
 
     register.defineBuilder("If", ::ifBuilder)
@@ -131,15 +143,15 @@ private fun buildProductions(): ProductionRegister {
     register.register("Exp -> Factor")
     register.register("ExpWithoutIf -> FactorWithoutIf")
 
-    register.register("Factor -> Primary")
-    register.register("Factor -> - Primary")
-    register.register("Factor -> ! Primary")
-    register.register("Factor -> ( Exp )")
+    register.register("Factor -> Primary Postfixes")
+    register.register("Factor -> - Primary Postfixes")
+    register.register("Factor -> ! Primary Postfixes")
+    register.register("Factor -> ( Exp ) Postfixes")
 
-    register.register("FactorWithoutIf -> PrimaryWithoutIf")
-    register.register("FactorWithoutIf -> - PrimaryWithoutIf")
-    register.register("FactorWithoutIf -> ! PrimaryWithoutIf")
-    register.register("FactorWithoutIf -> ( Exp )")
+    register.register("FactorWithoutIf -> PrimaryWithoutIf Postfixes")
+    register.register("FactorWithoutIf -> - PrimaryWithoutIf Postfixes")
+    register.register("FactorWithoutIf -> ! PrimaryWithoutIf Postfixes")
+    register.register("FactorWithoutIf -> ( Exp ) Postfixes")
 
     register.register("PrimaryWithoutIf -> number")
     register.register("PrimaryWithoutIf -> string")
@@ -147,6 +159,30 @@ private fun buildProductions(): ProductionRegister {
 
     register.register("Primary -> PrimaryWithoutIf")
     register.register("Primary -> IfExp")
+
+    /**
+     * Postfix
+     */
+
+    register.register("Postfixes -> ε")
+    register.register("Postfixes -> Postfix Postfixes")
+
+    register.register("Postfix -> FunctionCall")
+
+    /**
+     * Function
+     */
+
+    register.register("FunctionCall -> ( ExpList )")
+
+    /**
+     * ExpList
+     */
+
+    register.register("ExpList -> ε")
+    register.register("ExpList -> Exp ExpListTail")
+    register.register("ExpListTail -> ε")
+    register.register("ExpListTail -> , Exp ExpListTail")
 
     /**
      * Declare and Assign
@@ -198,9 +234,17 @@ fun main(args: Array<String>) {
         |var a = 4
         |var b = 6
         |var c = 5
-        |3 * - if(a > b && a > c) a else if(b > c) b else c""".trimMargin().reader(), createLexicon())
+        |print(3 * - if(a > b && a > c) a else if(b > c) b else c)
+        |print(abs(-9))
+        |""".trimMargin().reader(), createLexicon())
     val tree = p.parse(lexer)
     val env = BasicEnvironment()
+    env.putNew("abs", Function {
+        Math.abs(it[0] as Int)
+    })
+    env.putNew("print", Function {
+        println(it.joinToString(", "))
+    })
     println(tree)
     println("--------result--------")
     println(tree.eval(env))

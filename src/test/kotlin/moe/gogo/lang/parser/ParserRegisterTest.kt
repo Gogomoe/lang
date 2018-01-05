@@ -1,7 +1,7 @@
 package moe.gogo.lang.parser
 
 import io.kotlintest.specs.StringSpec
-import moe.gogo.lang.ast.BinaryExpr
+import moe.gogo.lang.ast.BinaryExp
 import moe.gogo.lang.ast.NumberLiteral
 import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.lexer.buildLexicon
@@ -22,7 +22,7 @@ class ParserRegisterTest : StringSpec() {
 private fun builderParsers(): ParserRegister {
     val register = ParserRegister(buildProductions())
     register.defineBuilder("number", ::NumberLiteral)
-    register.defineBuilder("Exp", ::BinaryExpr)
+    register.defineBuilder("Exp", ::BinaryExp)
     return register
 }
 

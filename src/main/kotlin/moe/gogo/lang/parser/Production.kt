@@ -1,6 +1,6 @@
 package moe.gogo.lang.parser
 
-internal class Production(val nonTerminal: NonTerminal, val symbols: List<Symbol>) {
+internal class Production(val nonTerminal: NonTerminal, val symbols: List<Symbol>, val production: String) {
 
     var nullable: Boolean = false
 
@@ -22,6 +22,6 @@ internal class Production(val nonTerminal: NonTerminal, val symbols: List<Symbol
 
     private fun symbolsString(): String = symbols.joinToString("")
 
-    override fun toString(): String = "$nonTerminal->${symbolsString()}"
+    override fun toString(): String = production
 }
 

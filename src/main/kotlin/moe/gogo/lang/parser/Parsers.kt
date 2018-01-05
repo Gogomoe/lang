@@ -2,7 +2,7 @@ package moe.gogo.lang.parser
 
 import moe.gogo.lang.ast.ASTLeaf
 import moe.gogo.lang.ast.ASTree
-import moe.gogo.lang.ast.BinaryExpr
+import moe.gogo.lang.ast.BinaryExp
 import moe.gogo.lang.lexer.Lexer
 import moe.gogo.lang.parser.ExpressionParser.Association
 import moe.gogo.lang.parser.ExpressionParser.Association.LEFT
@@ -69,7 +69,7 @@ class ExpressionParser(private val register: ParserRegister,
             right = doShift(right, next.value, lexer)
             next = nextOperator(lexer)
         }
-        return BinaryExpr(listOf(left, op, right))
+        return BinaryExp(listOf(left, op, right))
     }
 
 
