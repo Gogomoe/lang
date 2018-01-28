@@ -1,7 +1,8 @@
 package moe.gogo.lang.ast
 
 import moe.gogo.lang.Environment
-import moe.gogo.lang.toBool
+import moe.gogo.lang.type.Value
+import moe.gogo.lang.type.bool
 
 
 class IfStatement internal constructor(internal val condition: ASTree,
@@ -10,9 +11,9 @@ class IfStatement internal constructor(internal val condition: ASTree,
                                        internal val reject: ASTree? = null)
     : ASTList(listOfNotNull(condition, accept, *elses.toTypedArray(), reject)) {
 
-    override fun eval(env: Environment): Any? {
+    override fun eval(env: Environment): Value? {
 
-        fun ASTree.accepted(): Boolean = this.eval(env).toBool()
+        fun ASTree.accepted(): Boolean = this.eval(env).bool()
 
         if (condition.accepted()) {
             return accept.eval(env)
@@ -45,7 +46,7 @@ class IfStatement internal constructor(internal val condition: ASTree,
 
     internal class ElseStatement(private val block: ASTree) : ASTList(listOf(block)) {
 
-        override fun eval(env: Environment): Any? = block.eval(env)
+        override fun eval(env: Environment): Value? = block.eval(env)
 
         override fun toString(): String {
             return block.toString()

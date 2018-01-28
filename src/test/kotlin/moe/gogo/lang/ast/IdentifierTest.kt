@@ -6,6 +6,8 @@ import io.kotlintest.specs.StringSpec
 import moe.gogo.lang.LangRuntimeException
 import moe.gogo.lang.env
 import moe.gogo.lang.id
+import moe.gogo.lang.type.int
+import moe.gogo.lang.type.wrap
 
 class IdentifierTest : StringSpec() {
 
@@ -13,10 +15,10 @@ class IdentifierTest : StringSpec() {
 
         "eval"{
             val env = env()
-            env.putNew("a", 10)
+            env.putNew("a", 10.wrap())
             fun ASTree.eval() = this.eval(env)
 
-            id("a").eval() shouldBe 10
+            id("a").eval().int() shouldBe 10
 
             shouldThrow<LangRuntimeException> {
                 id("b").eval()

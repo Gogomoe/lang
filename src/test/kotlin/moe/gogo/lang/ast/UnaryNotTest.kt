@@ -6,12 +6,13 @@ import moe.gogo.lang.env
 import moe.gogo.lang.eval
 import moe.gogo.lang.id
 import moe.gogo.lang.num
+import moe.gogo.lang.type.bool
 
 class UnaryNotTest : StringSpec() {
 
     init {
         "eval"{
-            UnaryNot(listOf(id("!"), num(0))).eval() shouldBe true
+            UnaryNot(listOf(id("!"), num(0))).eval().bool() shouldBe true
         }
     }
 

@@ -5,7 +5,7 @@ import java.lang.UnsupportedOperationException
 
 sealed class Token(val lineNumber: Int, val name: String) {
 
-    open val intValue: Int
+    open val numberValue: Number
         get() = throw UnsupportedOperationException("不支持转换为数字")
 
     open val text: String
@@ -30,8 +30,8 @@ sealed class Token(val lineNumber: Int, val name: String) {
 
     override fun toString(): String = "<$text>"
 
-    internal class NumToken(lineNo: Int, id: String, value: Int) : Token(lineNo, id) {
-        override val intValue: Int = value
+    internal class NumToken(lineNo: Int, id: String, value: Number) : Token(lineNo, id) {
+        override val numberValue: Number = value
         override val isNumber: Boolean = true
         override val text: String = value.toString()
     }

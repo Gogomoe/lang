@@ -1,6 +1,7 @@
 package moe.gogo.lang.ast
 
 import moe.gogo.lang.Environment
+import moe.gogo.lang.type.Value
 
 class DeclareStmnt(val list: List<ASTree>) : ASTList(list) {
 
@@ -8,7 +9,7 @@ class DeclareStmnt(val list: List<ASTree>) : ASTList(list) {
 
     private val right = list.getOrNull(3)
 
-    override fun eval(env: Environment): Any? = right?.eval(env).also {
+    override fun eval(env: Environment): Value? = right?.eval(env).also {
         env.putNew(left.id, it)
     }
 

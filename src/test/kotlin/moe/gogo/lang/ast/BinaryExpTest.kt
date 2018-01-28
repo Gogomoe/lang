@@ -5,15 +5,16 @@ import io.kotlintest.specs.StringSpec
 import moe.gogo.lang.env
 import moe.gogo.lang.id
 import moe.gogo.lang.num
+import moe.gogo.lang.type.int
 
 class BinaryExpTest : StringSpec() {
 
     init {
         "eval"{
-            BinaryExp(listOf(num(10), id("+"), num(15))).eval() shouldBe 25
-            BinaryExp(listOf(num(10), id("-"), num(15))).eval() shouldBe -5
-            BinaryExp(listOf(num(10), id("*"), num(15))).eval() shouldBe 150
-            BinaryExp(listOf(num(80), id("/"), num(5))).eval() shouldBe 16
+            BinaryExp(listOf(num(10), id("+"), num(15))).eval().int() shouldBe 25
+            BinaryExp(listOf(num(10), id("-"), num(15))).eval().int() shouldBe -5
+            BinaryExp(listOf(num(10), id("*"), num(15))).eval().int() shouldBe 150
+            BinaryExp(listOf(num(80), id("/"), num(5))).eval().int() shouldBe 16
         }
     }
 

@@ -28,7 +28,14 @@ import moe.gogo.lang.parser.ExpressionParser.Association.RIGHT
 import moe.gogo.lang.parser.Parser
 import moe.gogo.lang.parser.ParserRegister
 import moe.gogo.lang.parser.ProductionRegister
-import moe.gogo.lang.type.Function
+import moe.gogo.lang.type.LFunction
+import moe.gogo.lang.type.Type
+import moe.gogo.lang.type.Type.Companion
+import moe.gogo.lang.type.Value
+import moe.gogo.lang.type.int
+import moe.gogo.lang.type.string
+import moe.gogo.lang.type.wrap
+import kotlin.reflect.jvm.internal.ReflectProperties.Val
 
 fun createLexicon(): Lexicon {
     val lexicon = Lexicon()
@@ -170,7 +177,7 @@ private fun buildProductions(): ProductionRegister {
     register.register("Postfix -> FunctionCall")
 
     /**
-     * Function
+     * LFunction
      */
 
     register.register("FunctionCall -> ( ExpList )")
@@ -239,21 +246,14 @@ fun main(args: Array<String>) {
         |""".trimMargin().reader(), createLexicon())
     val tree = p.parse(lexer)
     val env = BasicEnvironment()
-    env.putNew("abs", Function {
-        Math.abs(it[0] as Int)
+    env.putNew("abs", Type.Function {
+        Math.abs(it[0].int()).wrap()
     })
-    env.putNew("print", Function {
-        println(it.joinToString(", "))
+    env.putNew("print", Type.Function {
+        println(it.joinToString(", ", transform = Value?::string))
+        Value.Unit
     })
     println(tree)
     println("--------result--------")
-    println(tree.eval(env))
-}
-
-
-fun Any?.toBool() = when (this) {
-    is Boolean -> this
-    is Number -> this.toInt() != 0
-    is String -> this.isNotBlank()
-    else -> this != null
+    println(tree.eval(env).string())
 }

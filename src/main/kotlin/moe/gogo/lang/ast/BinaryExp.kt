@@ -2,7 +2,14 @@ package moe.gogo.lang.ast
 
 import moe.gogo.lang.Environment
 import moe.gogo.lang.LangRuntimeException
-import moe.gogo.lang.toBool
+import moe.gogo.lang.type.Type
+import moe.gogo.lang.type.Value
+import moe.gogo.lang.type.bool
+import moe.gogo.lang.type.call
+import moe.gogo.lang.type.int
+import moe.gogo.lang.type.isa
+import moe.gogo.lang.type.string
+import moe.gogo.lang.type.wrap
 
 class BinaryExp(list: List<ASTree>) : ASTList(list) {
 
@@ -11,42 +18,48 @@ class BinaryExp(list: List<ASTree>) : ASTList(list) {
 
     private val operator = (list[1] as ASTLeaf).token.text
 
-    override fun eval(env: Environment): Any? {
+    override fun eval(env: Environment): Value? {
         if (left is Identifier && operator == "=") {
             return evalAssign(env)
         }
         val l = left.eval(env)
         val r = right.eval(env)
-        if ((l is String || r is String) && operator == "+") {
-            return l.toString() + r.toString()
+        if ((l isa Type.String || r isa Type.String) && operator == "+") {
+            return (l.string() + r.string()).wrap()
         }
-        return when {
-            operator == "==" -> l == r
-            operator == "!=" -> l != r
-            operator == "&&" -> l.toBool() && r.toBool()
-            operator == "||" -> l.toBool() || r.toBool()
-            l is Int && r is Int -> evalInt(r, l, operator)
+        when (operator) {
+            "==" -> return (
+                    if (l != null)
+                        l["equals"].call(l, listOf(r)).bool()
+                    else
+                        l == r).wrap()
+            "!=" -> return (
+                    if (l != null)
+                        l["equals"].call(l, listOf(r)).bool().not()
+                    else
+                        l != r).wrap()
+            "&&" -> return (l.bool() && r.bool()).wrap()
+            "||" -> return (l.bool() || r.bool()).wrap()
+        }
+        l ?: throw LangRuntimeException("null 不支持运算符")
+        return when (operator) {
+            "+" -> l["plus"].call(l, listOf(r))
+            "-" -> l["minus"].call(l, listOf(r))
+            "*" -> l["times"].call(l, listOf(r))
+            "/" -> l["div"].call(l, listOf(r))
+            "%" -> l["mod"].call(l, listOf(r))
+            ">" -> (l["compareTo"].call(l, listOf(r)).int() > 0).wrap()
+            ">=" -> (l["compareTo"].call(l, listOf(r)).int() >= 0).wrap()
+            "<" -> (l["compareTo"].call(l, listOf(r)).int() < 0).wrap()
+            "<=" -> (l["compareTo"].call(l, listOf(r)).int() <= 0).wrap()
             else -> throw LangRuntimeException("不支持运算 ${toString()}")
 
         }
     }
 
-    private fun evalAssign(env: Environment): Any? = right.eval(env).let {
-        env.set((left as Identifier).id, it)
+    private fun evalAssign(env: Environment): Value? = right.eval(env).also {
+        env[(left as Identifier).id] = it
     }
-
-    private fun evalInt(r: Int, l: Int, operator: String): Any? = when (operator) {
-        "+" -> l + r
-        "-" -> l - r
-        "*" -> l * r
-        "/" -> l / r
-        "%" -> l % r
-        ">" -> l > r
-        ">=" -> l >= r
-        "<" -> l <= r
-        else -> throw LangRuntimeException("不支持运算 ${toString()}")
-    }
-
 
     override fun toString(): String = "<$left $operator $right>"
 

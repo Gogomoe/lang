@@ -7,11 +7,11 @@ import moe.gogo.lang.ast.IfStatement.Companion.elseIfOrElseBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.ifBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.subIfOrElseBlockBuilder
 import moe.gogo.lang.ast.IfStatement.ElseIfStatement
-import moe.gogo.lang.env
 import moe.gogo.lang.eval
 import moe.gogo.lang.id
 import moe.gogo.lang.num
-import moe.gogo.lang.toBool
+import moe.gogo.lang.type.bool
+import moe.gogo.lang.type.int
 
 class IfStatementTest : StringSpec() {
 
@@ -24,17 +24,17 @@ class IfStatementTest : StringSpec() {
             tree as IfStatement
             tree.elses.size shouldBe 0
             tree.reject shouldBe null
-            tree.condition.eval().toBool() shouldBe false
-            tree.accept.eval() shouldBe 99
+            tree.condition.eval().bool() shouldBe false
+            tree.accept.eval().int() shouldBe 99
         }
         "elseIfOrElseBuilder"{
             shouldThrowAny {
                 elseIfOrElseBuilder(emptyList()).eval()
             }
-            elseIfOrElseBuilder(listOf(id("else"), num(5))).eval() shouldBe 5
+            elseIfOrElseBuilder(listOf(id("else"), num(5))).eval().int() shouldBe 5
         }
         "else block"{
-            subIfOrElseBlockBuilder(listOf(num(7))).eval() shouldBe 7
+            subIfOrElseBlockBuilder(listOf(num(7))).eval().int() shouldBe 7
         }
         "else if without else or else if"{
             val tree = subIfOrElseBlockBuilder(listOf(
@@ -52,7 +52,7 @@ class IfStatementTest : StringSpec() {
             ))
             tree as ElseIfStatement
             tree.elses.size shouldBe 0
-            tree.reject!!.eval() shouldBe 15
+            tree.reject!!.eval().int() shouldBe 15
         }
         "else if with else if"{
             val subElseIf1 = subIfOrElseBlockBuilder(listOf(
@@ -69,7 +69,7 @@ class IfStatementTest : StringSpec() {
             ))
             tree as ElseIfStatement
             tree.elses.size shouldBe 2
-            tree.reject!!.eval() shouldBe 1001
+            tree.reject!!.eval().int() shouldBe 1001
         }
     }
 

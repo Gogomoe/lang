@@ -6,12 +6,13 @@ import moe.gogo.lang.env
 import moe.gogo.lang.eval
 import moe.gogo.lang.id
 import moe.gogo.lang.num
+import moe.gogo.lang.type.int
 
 class UnaryMinusTest : StringSpec() {
 
     init {
         "eval"{
-            UnaryMinus(listOf(id("-"), num(5))).eval() shouldBe -5
+            UnaryMinus(listOf(id("-"), num(5))).eval().int() shouldBe -5
         }
     }
 

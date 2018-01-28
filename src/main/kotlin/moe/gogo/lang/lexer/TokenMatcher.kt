@@ -105,7 +105,7 @@ class MultiWordsTokenMatcher(
 
 private fun buildToken(type: KClass<out Token>, lineNo: Int, id: String, string: String): Token = when (type) {
     IdToken::class -> IdToken(lineNo, id, string)
-    NumToken::class -> NumToken(lineNo, id, string.toInt())
+    NumToken::class -> NumToken(lineNo, id, if (string.contains('.')) string.toDouble() else string.toInt())
     StrToken::class -> StrToken(lineNo, id, string)
     CommentToken::class -> CommentToken(lineNo, id, string)
     else -> throw IllegalStateException("Token类型不正确")

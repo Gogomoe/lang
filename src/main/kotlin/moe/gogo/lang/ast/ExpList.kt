@@ -1,14 +1,15 @@
 package moe.gogo.lang.ast
 
 import moe.gogo.lang.Environment
+import moe.gogo.lang.type.Value
 
 
 class ExpList(list: List<ASTree>) : ASTList(list) {
 
     internal val exps = list
 
-    override fun eval(env: Environment): Any? {
-        var res: Any? = null
+    override fun eval(env: Environment): Value? {
+        var res: Value? = null
         exps.forEach {
             res = it.eval(env)
         }
