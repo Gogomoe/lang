@@ -8,11 +8,11 @@ import moe.gogo.lang.type.Value
 import moe.gogo.lang.type.nota
 
 
-class FunctionCall(internal val function: ASTree, internal val params: List<ASTree>)
-    : ASTList(listOf(function, *params.toTypedArray())) {
+class FunctionCall(internal val functionName: ASTree, internal val params: List<ASTree>)
+    : ASTList(listOf(functionName, *params.toTypedArray())) {
 
     override fun eval(env: Environment): Value? {
-        val func = function.eval(env)
+        val func = functionName.eval(env)
         if (func nota Type.Function) {
             throw LangRuntimeException("$func 不是一个方法")
         }
@@ -21,6 +21,6 @@ class FunctionCall(internal val function: ASTree, internal val params: List<ASTr
     }
 
     override fun toString(): String {
-        return "$function($params)"
+        return "$functionName($params)"
     }
 }

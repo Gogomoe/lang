@@ -1,8 +1,11 @@
 package moe.gogo.lang
 
+import moe.gogo.lang.ast.DeclareFunction
 import moe.gogo.lang.ast.DeclareStmnt
 import moe.gogo.lang.ast.ExpList.Companion.expList
 import moe.gogo.lang.ast.FunctionCallPostfix.Companion.functionCallPostfix
+import moe.gogo.lang.ast.IdList
+import moe.gogo.lang.ast.IdList.Companion.idList
 import moe.gogo.lang.ast.IfStatement.Companion.elseIfOrElseBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.ifBuilder
 import moe.gogo.lang.ast.IfStatement.Companion.subIfOrElseBlockBuilder
@@ -35,6 +38,7 @@ import moe.gogo.lang.type.Value
 import moe.gogo.lang.type.int
 import moe.gogo.lang.type.string
 import moe.gogo.lang.type.wrap
+import org.intellij.lang.annotations.Language
 import kotlin.reflect.jvm.internal.ReflectProperties.Val
 
 fun createLexicon(): Lexicon {
@@ -43,6 +47,7 @@ fun createLexicon(): Lexicon {
     lexicon.defineString("if")
     lexicon.defineString("else")
     lexicon.defineString("for")
+    lexicon.defineString("function")
 
     lexicon.defineString("&&")
     lexicon.defineString("||")
@@ -95,6 +100,9 @@ private fun builderParsers(): ParserRegister {
 
     register.defineBuilder("Postfixes", ::postfixes)
     register.defineBuilder("FunctionCall", ::functionCallPostfix)
+
+    register.defineBuilder("DeclareFunction", ::DeclareFunction)
+    register.defineBuilder("IdList", ::idList)
 
     register.register("Postfixes", postfixesParser)
 
@@ -177,10 +185,21 @@ private fun buildProductions(): ProductionRegister {
     register.register("Postfix -> FunctionCall")
 
     /**
-     * LFunction
+     * Function
      */
 
     register.register("FunctionCall -> ( ExpList )")
+
+    /**
+     * Declare Function
+     */
+
+    register.register("DeclareFunction -> function id ( IdList ) { Statements }")
+    register.register("IdList -> ε")
+    register.register("IdList -> id Ids")
+    register.register("Ids -> , id Ids")
+    register.register("Ids -> ε")
+
 
     /**
      * ExpList
@@ -216,7 +235,6 @@ private fun buildProductions(): ProductionRegister {
     /**
      * Blocks
      */
-
     register.register("ExpWithoutIfOrBlock -> ExpWithoutIf")
     register.register("ExpWithoutIfOrBlock -> { Statements }")
 
@@ -228,6 +246,7 @@ private fun buildProductions(): ProductionRegister {
     register.register("Statements -> ε")
 
     register.register("Statement -> Declare")
+    register.register("Statement -> DeclareFunction")
     register.register("Statement -> Exp")
 
     return register
@@ -238,11 +257,18 @@ fun main(args: Array<String>) {
     val parsers = builderParsers()
     val p = parsers.findParser("Statements")!!
     val lexer = Lexer("""
+        |
         |var a = 4
         |var b = 6
         |var c = 5
         |print(3 * - if(a > b && a > c) a else if(b > c) b else c)
         |print(abs(-9))
+        |
+        |function add(a, b){
+        |   a + b
+        |}
+        |print(add(7, 8))
+        |
         |""".trimMargin().reader(), createLexicon())
     val tree = p.parse(lexer)
     val env = BasicEnvironment()
